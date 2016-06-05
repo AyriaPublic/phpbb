@@ -456,24 +456,21 @@ function still_on_time($extra_time = 15)
 *
 * Hash the password
 */
-function phpbb_hash($password)
+
+function phpbb_hash_old($password)
 {
 	$itoa64 = './0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
-
 	$random_state = unique_id();
 	$random = '';
 	$count = 6;
-
 	if (($fh = @fopen('/dev/urandom', 'rb')))
 	{
 		$random = fread($fh, $count);
 		fclose($fh);
 	}
-
 	if (strlen($random) < $count)
 	{
 		$random = '';
-
 		for ($i = 0; $i < $count; $i += 16)
 		{
 			$random_state = md5(unique_id() . $random_state);
@@ -481,15 +478,17 @@ function phpbb_hash($password)
 		}
 		$random = substr($random, 0, $count);
 	}
-
 	$hash = _hash_crypt_private($password, _hash_gensalt_private($random, $itoa64), $itoa64);
-
 	if (strlen($hash) == 34)
 	{
 		return $hash;
 	}
-
 	return md5($password);
+}
+
+function phpbb_hash($password)
+{
+	return '$S$' . hash('sha512', $password);
 }
 
 /**
@@ -500,6 +499,23 @@ function phpbb_hash($password)
 *
 * @return bool Returns true if the password is correct, false if not.
 */
+function phpbb_check_hash_old($password, $hash)
+{
+	if (strlen($password) > 4096)
+	{
+		// If the password is too huge, we will simply reject it
+		// and not let the server try to hash it.
+		return false;
+	}
+	$itoa64 = './0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+	if (strlen($hash) == 34)
+	{
+		return (_hash_crypt_private($password, $hash, $itoa64) === $hash) ? true : false;
+	}
+	return (md5($password) === $hash) ? true : false;
+}
+
+
 function phpbb_check_hash($password, $hash)
 {
 	if (strlen($password) > 4096)
@@ -509,13 +525,7 @@ function phpbb_check_hash($password, $hash)
 		return false;
 	}
 
-	$itoa64 = './0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
-	if (strlen($hash) == 34)
-	{
-		return (_hash_crypt_private($password, $hash, $itoa64) === $hash) ? true : false;
-	}
-
-	return (md5($password) === $hash) ? true : false;
+	return ('$S$' . hash('sha512', $password) === $hash) ? true : false;
 }
 
 /**
@@ -3399,7 +3409,7 @@ function parse_cfg_file($filename, $lines = false)
 
 		$parsed_items[$key] = $value;
 	}
-	
+
 	if (isset($parsed_items['inherit_from']) && isset($parsed_items['name']) && $parsed_items['inherit_from'] == $parsed_items['name'])
 	{
 		unset($parsed_items['inherit_from']);

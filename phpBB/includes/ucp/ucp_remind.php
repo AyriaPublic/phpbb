@@ -77,15 +77,11 @@ class ucp_remind
 
 			$server_url = generate_board_url();
 
-			// Make password at least 8 characters long, make it longer if admin wants to.
-			// gen_rand_string() however has a limit of 12 or 13.
-			$user_password = gen_rand_string_friendly(max(8, mt_rand((int) $config['min_pass_chars'], (int) $config['max_pass_chars'])));
+			$user_actkey = gen_rand_string(mt_rand(20, 32));
 
-			// For the activation key a random length between 6 and 10 will do.
-			$user_actkey = gen_rand_string(mt_rand(6, 10));
 
 			$sql = 'UPDATE ' . USERS_TABLE . "
-				SET user_newpasswd = '" . $db->sql_escape(phpbb_hash($user_password)) . "', user_actkey = '" . $db->sql_escape($user_actkey) . "'
+				SET user_actkey = '" . $db->sql_escape($user_actkey) . "'
 				WHERE user_id = " . $user_row['user_id'];
 			$db->sql_query($sql);
 
@@ -102,8 +98,7 @@ class ucp_remind
 
 			$messenger->assign_vars(array(
 				'USERNAME'		=> htmlspecialchars_decode($user_row['username']),
-				'PASSWORD'		=> htmlspecialchars_decode($user_password),
-				'U_ACTIVATE'	=> "$server_url/ucp.$phpEx?mode=activate&u={$user_row['user_id']}&k=$user_actkey")
+				'U_ACTIVATE'	=> "$server_url/resetpassword.$phpEx?u={$user_row['user_id']}&k=$user_actkey")
 			);
 
 			$messenger->send($user_row['user_notify_type']);

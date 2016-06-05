@@ -15,6 +15,11 @@
 	onload_functions.push('apply_onkeypress_event()');
 	<!-- ENDIF -->
 
+	$jq(document).ready(function()
+	{
+			hashPasswords("register", ["new_password", "password_confirm"], "submit");
+	});
+
 // ]]>
 </script>
 

@@ -157,7 +157,7 @@ class ucp_register
 		}
 
 
-		// The CAPTCHA kicks in here. We can't help that the information gets lost on language change. 
+		// The CAPTCHA kicks in here. We can't help that the information gets lost on language change.
 		if ($config['enable_confirm'])
 		{
 			include($phpbb_root_path . 'includes/captcha/captcha_factory.' . $phpEx);
@@ -283,9 +283,11 @@ class ucp_register
 					$user_inactive_time = 0;
 				}
 
+
+
 				$user_row = array(
 					'username'				=> $data['username'],
-					'user_password'			=> phpbb_hash($data['new_password']),
+					'user_password'			=> '',
 					'user_email'			=> $data['email'],
 					'group_id'				=> (int) $group_id,
 					'user_timezone'			=> (float) $data['tz'],
@@ -312,6 +314,12 @@ class ucp_register
 				{
 					trigger_error('NO_USER', E_USER_ERROR);
 				}
+
+				// set new pw hash
+				$sql = 'UPDATE ' . USERS_TABLE . '
+					SET user_password = "' . phpbb_hash($data['new_password'] . md5($user_id))  . '"
+					WHERE user_id = ' . $user_id ;
+				$db->sql_query($sql);
 
 				// Okay, captcha, your job is done.
 				if ($config['enable_confirm'] && isset($captcha))
